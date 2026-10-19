@@ -64,12 +64,16 @@ source = source.replace(/\bNetworking\./g, 'NetworkMock.')
 // the content root and mirrored on the panel once the test builds it.
 source = source.replace('      id: keyCatcher\n', `      id: keyCatcher
       property alias testButton: portalAction
+      property alias testCopy: portalCopy
+      property alias testCopyLabel: portalCopyLabel
       property alias testTitle: heroSsid
 `)
 source = source.replace('  id: root', `  id: root
   function testEnsureContent() { return panel.ensureContent() }
   readonly property Item testContent: panel.loadedContent
   readonly property Item testButton: panel.loadedContent ? panel.loadedContent.testButton : null
+  readonly property Item testCopy: panel.loadedContent ? panel.loadedContent.testCopy : null
+  readonly property Item testCopyLabel: panel.loadedContent ? panel.loadedContent.testCopyLabel : null
   readonly property Item testKeys: panel.loadedContent
   readonly property Item testMeta: panel.loadedContent ? panel.loadedContent.heroMeta : null
   readonly property Item testTitle: panel.loadedContent ? panel.loadedContent.testTitle : null
@@ -88,11 +92,14 @@ printf '#!/bin/bash\nif [[ -n ${NETWORK_TEST_PREVIEW:-} ]]; then\n  printf "type
 chmod +x "$stage/bin/omarchy-network-status"
 printf '#!/bin/bash\nprintf "%%s\\n" "$@" >> "$NETWORK_TEST_BROWSER_LOG"\n' > "$stage/bin/omarchy-launch-browser"
 chmod +x "$stage/bin/omarchy-launch-browser"
+printf '#!/bin/bash\nprintf "%%s\\n" "$(cat)" >> "$NETWORK_TEST_COPY_LOG"\n' > "$stage/bin/wl-copy"
+chmod +x "$stage/bin/wl-copy"
 
 # All networking and external actions are mocked; the real connection and
 # browser are never touched, and the fixture writes only to its scratch HOME.
 output=$(HOME="$stage/home" OMARCHY_PATH="$ROOT" PATH="$stage/bin:$PATH" \
   NETWORK_TEST_BROWSER_LOG="$stage/browser.log" \
+  NETWORK_TEST_COPY_LOG="$stage/copy.log" \
   timeout 30 quickshell -p "$stage" --no-color 2>&1) || fail "network portal fixture exits cleanly" "$output"
 [[ $output == *"RESULT pass"* ]] || fail "network portal runtime assertions pass" "$output"
 if rg -q 'RESULT fail|ReferenceError|TypeError|Error:|Unable to assign|Binding loop' <<< "$output"; then
@@ -100,4 +107,6 @@ if rg -q 'RESULT fail|ReferenceError|TypeError|Error:|Unable to assign|Binding l
 fi
 [[ -f $stage/browser.log ]] || fail "portal action launches the browser"
 [[ $(<"$stage/browser.log") == "http://ping.archlinux.org/nm-check.txt" ]] || fail "portal opens exactly one fixed HTTP URL"
-pass "network portal, recovery, disabled checks, outage, disconnect, keyboard navigation, and browser argv work in QML"
+[[ -f $stage/copy.log ]] || fail "portal copy writes to the clipboard"
+[[ $(<"$stage/copy.log") == "http://ping.archlinux.org/nm-check.txt" ]] || fail "portal copies exactly the browser entry point once"
+pass "network portal, recovery, disabled checks, outage, disconnect, keyboard navigation, browser argv, and link copy work in QML"
