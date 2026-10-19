@@ -97,6 +97,9 @@ chmod +x "$stage/bin/wl-copy"
 
 # All networking and external actions are mocked; the real connection and
 # browser are never touched, and the fixture writes only to its scratch HOME.
+if [[ -n ${NETWORK_TEST_PREVIEW:-} && -n ${NETWORK_TEST_SCREENSHOT:-} ]]; then
+  rm -f -- "$NETWORK_TEST_SCREENSHOT"
+fi
 output=$(HOME="$stage/home" OMARCHY_PATH="$ROOT" PATH="$stage/bin:$PATH" \
   NETWORK_TEST_BROWSER_LOG="$stage/browser.log" \
   NETWORK_TEST_COPY_LOG="$stage/copy.log" \
