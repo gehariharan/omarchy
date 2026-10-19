@@ -62,7 +62,11 @@ ShellRoot {
   }
 
   function portalChecks() {
+    // Preview mode starts with synthetic route details. Clear them so both
+    // modes exercise the missing-route fallback before testing the copy row.
+    panel.info = ({})
     check(!panel.canCopyCaptivePortalLink && !panel.testCopy.visible, "missing interface keeps copy action hidden")
+    check(panel.testTitle.text === "Guest Wi-Fi", "connected SSID survives missing route details")
     // Give the portal-only details row a synthetic interface; never read the host.
     panel.info = { iface: "test-wifi", type: "wifi", ssid: "Guest Wi-Fi", ip: "192.0.2.10", gateway: "192.0.2.1" }
     check(panel.hasCaptivePortal && panel.restricted, "native portal activates restricted mode")

@@ -105,6 +105,9 @@ output=$(HOME="$stage/home" OMARCHY_PATH="$ROOT" PATH="$stage/bin:$PATH" \
 if rg -q 'RESULT fail|ReferenceError|TypeError|Error:|Unable to assign|Binding loop' <<< "$output"; then
   fail "network portal fixture has no QML errors" "$output"
 fi
+if [[ -n ${NETWORK_TEST_PREVIEW:-} && -n ${NETWORK_TEST_SCREENSHOT:-} ]]; then
+  [[ -s $NETWORK_TEST_SCREENSHOT ]] || fail "network portal preview saves the panel screenshot"
+fi
 [[ -f $stage/browser.log ]] || fail "portal action launches the browser"
 [[ $(<"$stage/browser.log") == "http://ping.archlinux.org/nm-check.txt" ]] || fail "portal opens exactly one fixed HTTP URL"
 [[ -f $stage/copy.log ]] || fail "portal copy writes to the clipboard"
